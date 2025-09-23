@@ -1,0 +1,58 @@
+<div class="bg-white p-4 rounded-lg shadow-md">
+    <div class="flex justify-between items-center mb-4">
+        <input type="text" id="search-student" placeholder="Tìm kiếm sinh viên..." class="border rounded-md px-3 py-2 w-1/3">
+        <button id="add-student-btn" class="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 flex items-center"><i data-lucide="plus" class="w-5 h-5 mr-1"></i>Thêm mới</button>
+    </div>
+    <div class="overflow-x-auto">
+        <table class="w-full text-left">
+            <thead>
+                <tr class="bg-gray-200">
+                    <th class="p-3">Mã SV</th>
+                    <th class="p-3">Họ Tên</th>
+                    <th class="p-3">Chuyên ngành</th>
+                    <th class="p-3">Khóa học</th>
+                    <th class="p-3">Loại hình ĐT</th> <!-- <-- THÊM MỚI -->
+                    <th class="p-3">Hành động</th>
+                </tr>
+            </thead>
+            <tbody id="student-table-body">
+                <!-- Dữ liệu sinh viên sẽ được chèn vào đây -->
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Student Modal -->
+<div id="student-modal" class="modal fixed inset-0 bg-black bg-opacity-50 justify-center items-center">
+    <div class="bg-white p-6 rounded-lg shadow-lg w-full max-w-lg">
+        <h2 class="text-2xl font-bold mb-4">Thêm Sinh viên mới</h2>
+        <form id="student-form">
+            <div class="mb-4">
+                <label for="MaSV" class="block text-gray-700 mb-1">Mã Sinh viên</label>
+                <input type="text" name="MaSV" class="w-full border rounded-md px-3 py-2" required>
+            </div>
+            <div class="mb-4">
+                <label for="HoTenSV" class="block text-gray-700 mb-1">Họ tên</label>
+                <input type="text" name="HoTenSV" class="w-full border rounded-md px-3 py-2" required>
+            </div>
+            <div class="mb-4">
+                <label for="MaChuyenNganh" class="block text-gray-700 mb-1">Chuyên ngành</label>
+                <select name="MaChuyenNganh" id="student-modal-chuyennganh" class="w-full border rounded-md px-3 py-2" required></select>
+            </div>
+            <div class="mb-4">
+                <label for="MaKhoaHoc" class="block text-gray-700 mb-1">Khóa học</label>
+                <select name="MaKhoaHoc" id="student-modal-khoahoc" class="w-full border rounded-md px-3 py-2" required></select>
+            </div>
+             <!-- Sửa đổi: Thêm trường Loại hình đào tạo -->
+            <div class="mb-4">
+                <label for="MaLHDT" class="block text-gray-700 mb-1">Loại hình đào tạo</label>
+                <select name="MaLHDT" id="student-modal-lhdt" class="w-full border rounded-md px-3 py-2" required></select>
+            </div>
+            <div class="flex justify-end gap-4 mt-6">
+                <button type="button" id="cancel-student-modal" class="bg-gray-300 text-gray-800 px-4 py-2 rounded-md hover:bg-gray-400">Hủy</button>
+                <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600">Lưu</button>
+            </div>
+        </form>
+    </div>
+</div>
+

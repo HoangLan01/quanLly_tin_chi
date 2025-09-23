@@ -1,0 +1,42 @@
+<div class="bg-white p-4 rounded-lg shadow-md">
+    <div class="flex justify-between items-center mb-4">
+        <h2 class="text-xl font-semibold">Quản lý Khoa</h2>
+        <button id="add-faculty-btn" class="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 flex items-center"><i data-lucide="plus" class="w-5 h-5 mr-1"></i>Thêm mới</button>
+    </div>
+    <div class="overflow-x-auto">
+        <table class="w-full text-left">
+            <thead>
+                <tr class="bg-gray-200">
+                    <th class="p-3">Mã Khoa</th>
+                    <th class="p-3">Tên Khoa</th>
+                    <th class="p-3">Hành động</th>
+                </tr>
+            </thead>
+            <tbody id="faculty-table-body">
+                <!-- Dữ liệu khoa sẽ được chèn vào đây -->
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Faculty Modal -->
+<div id="faculty-modal" class="modal fixed inset-0 bg-black bg-opacity-50 justify-center items-center">
+    <div class="bg-white p-6 rounded-lg shadow-lg w-full max-w-lg">
+        <h2 class="text-2xl font-bold mb-4">Thêm Khoa mới</h2>
+        <form id="faculty-form">
+            <div class="mb-4">
+                <label for="MaKhoa" class="block text-gray-700 mb-1">Mã Khoa</label>
+                <input type="text" name="MaKhoa" class="w-full border rounded-md px-3 py-2" required>
+            </div>
+            <div class="mb-4">
+                <label for="TenKhoa" class="block text-gray-700 mb-1">Tên Khoa</label>
+                <input type="text" name="TenKhoa" class="w-full border rounded-md px-3 py-2" required>
+            </div>
+            <div class="flex justify-end gap-4 mt-6">
+                <button type="button" id="cancel-faculty-modal" class="bg-gray-300 text-gray-800 px-4 py-2 rounded-md hover:bg-gray-400">Hủy</button>
+                <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600">Lưu</button>
+            </div>
+        </form>
+    </div>
+</div>
+

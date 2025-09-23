@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hệ thống quản lý sinh viên bằng tín chỉ</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; }
+        ::-webkit-scrollbar-thumb { background: #888; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #555; }
+        .sidebar-link.active { background-color: #3b82f6; color: white; }
+        .modal { display: none; }
+        .modal.flex { display: flex; }
+    </style>
+</head>
+<body class="bg-gray-100">
+    <div class="flex h-screen">
+        <!-- Sidebar -->
+        <nav id="sidebar" class="w-64 bg-gray-800 text-white flex-shrink-0">
+            <div class="p-4 border-b border-gray-700">
+                <h2 class="text-xl font-bold">Quản lý Đào tạo</h2>
+            </div>
+            <ul class="py-4">
+                 <li><a href="#dashboard" class="sidebar-link" data-view="dashboard"><i data-lucide="layout-dashboard" class="inline-block w-5 h-5 mr-2"></i>Bảng điều khiển</a></li>
+                <li><a href="#student" class="sidebar-link" data-view="student"><i data-lucide="users" class="inline-block w-5 h-5 mr-2"></i>Quản lý Sinh viên</a></li>
+                <li><a href="#lecturer" class="sidebar-link" data-view="lecturer"><i data-lucide="user-check" class="inline-block w-5 h-5 mr-2"></i>Quản lý Giảng viên</a></li>
+                <li><a href="#subject" class="sidebar-link" data-view="subject"><i data-lucide="book-open" class="inline-block w-5 h-5 mr-2"></i>Quản lý Môn học</a></li>
+                <li><a href="#class" class="sidebar-link" data-view="class"><i data-lucide="school" class="inline-block w-5 h-5 mr-2"></i>Quản lý Lớp học</a></li>
+                <li><a href="#faculty" class="sidebar-link" data-view="faculty"><i data-lucide="building" class="inline-block w-5 h-5 mr-2"></i>Quản lý Khoa</a></li>
+                <li><a href="#semester" class="sidebar-link" data-view="semester"><i data-lucide="calendar" class="inline-block w-5 h-5 mr-2"></i>Quản lý Học kỳ</a></li>
+                <li class="px-4 mt-4 mb-2 text-xs uppercase text-gray-400">Thống kê & Báo cáo</li>
+                <!-- Các link báo cáo sẽ được thêm sau -->
+            </ul>
+        </nav>
+
+        <!-- Main content -->
+        <main class="flex-1 p-6 overflow-y-auto">
+            <h1 id="main-title" class="text-3xl font-bold text-gray-800 mb-6"></h1>
+            <div id="content-container">
+                <!-- Nội dung từ các file view sẽ được tải vào đây -->
+            </div>
+        </main>
+    </div>
+    
+    <!-- Toast Notification -->
+    <div id="toast" class="fixed bottom-5 right-5 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg opacity-0 transition-opacity duration-300">
+        <span id="toast-message"></span>
+    </div>
+
+    <!-- Tải các file JavaScript -->
+    <script src="./js/api.js"></script>
+    <script src="./js/render.js"></script>
+    <script src="./js/main.js"></script>
+</body>
+</html>
