@@ -61,6 +61,55 @@ const api = {
             throw new Error(errorData.error || 'Xóa thất bại');
         }
         return await response.json();
-    }
+    },
+
+    // THÊM MỚI: Các hàm gọi API thống kê
+    getStudentStats: async (semester = '') => {
+        const url = new URL(`${API_BASE_URL}/statistics/student-gpa`);
+        if (semester) url.searchParams.append('hocky', semester);
+        const response = await fetch(url);
+        if (!response.ok) throw new Error('Không thể tải thống kê sinh viên');
+        return await response.json();
+    },
+
+    getLecturerStats: async (semester) => {
+        if (!semester) return []; // Yêu cầu phải có học kỳ
+        const url = new URL(`${API_BASE_URL}/statistics/lecturer-workload`);
+        url.searchParams.append('hocky', semester);
+        const response = await fetch(url);
+        if (!response.ok) throw new Error('Không thể tải thống kê giảng viên');
+        return await response.json();
+    },
+
+    getClassroomStats: async (semester) => {
+        if (!semester) return []; // Yêu cầu phải có học kỳ
+        const url = new URL(`${API_BASE_URL}/statistics/classroom-usage`);
+        url.searchParams.append('hocky', semester);
+        const response = await fetch(url);
+        if (!response.ok) throw new Error('Không thể tải thống kê phòng học');
+        return await response.json();
+    },
+
+    getStudents: async (searchTerm = '') => {
+        const url = new URL(`${API_BASE_URL}/students`);
+        if (searchTerm) url.searchParams.append('search', searchTerm);
+        const response = await fetch(url);
+        if (!response.ok) throw new Error('Không thể tải danh sách sinh viên');
+        return await response.json();
+    },
+    getSubjects: async (searchTerm = '') => {
+        const url = new URL(`${API_BASE_URL}/subjects`);
+        if (searchTerm) url.searchParams.append('search', searchTerm);
+        const response = await fetch(url);
+        if (!response.ok) throw new Error('Không thể tải danh sách môn học');
+        return await response.json();
+    },
+    getClasses: async (searchTerm = '') => {
+        const url = new URL(`${API_BASE_URL}/classes`);
+        if (searchTerm) url.searchParams.append('search', searchTerm);
+        const response = await fetch(url);
+        if (!response.ok) throw new Error('Không thể tải danh sách lớp học');
+        return await response.json();
+    },
 };
 

@@ -109,7 +109,76 @@ async function handleDelete(itemId, itemName, apiEndpoint, onFormSubmitSuccess) 
 }
 
 
-// ----- CÁC HÀM RENDER RIÊNG -----
+// ----- CÁC HÀM RENDER VIEW CHÍNH -----
+
+async function renderDashboardView(data) {
+    // Logic cho dashboard (nếu có)
+}
+
+async function renderStudentView(data) {
+    // Sửa: Truyền data.sinhVien thay vì data
+    renderStudentTable(data.sinhVien);
+    populateSelect('student-major-filter', data.chuyenNganh, 'machuyennganh', 'tenchuyennganh');
+    populateSelect('student-course-filter', data.khoaHoc, 'makhoahoc', 'tenkhoahoc');
+    setupSearch('student-search-input', api.getStudents, renderStudentTable);
+}
+
+async function renderLecturerView(data) {
+    // Sửa: Truyền data.giangVien thay vì data
+    renderLecturerTable(data.giangVien);
+    populateSelect('lecturer-faculty-filter', data.khoa, 'makhoa', 'tenkhoa');
+}
+
+async function renderSubjectView(data) {
+    // Sửa: Truyền data.monHoc thay vì data
+    renderSubjectTable(data.monHoc);
+    setupSearch('subject-search-input', api.getSubjects, renderSubjectTable);
+}
+
+async function renderClassView(data) {
+    // Sửa: Truyền data.lopHoc thay vì data
+    renderClassTable(data.lopHoc);
+    populateSelect('class-subject-filter', data.monHoc, 'mamh', 'tenmh');
+    populateSelect('class-lecturer-filter', data.giangVien, 'magv', 'hotengv');
+    populateSelect('class-room-filter', data.phongHoc, 'maphong', 'tenphong');
+    populateSelect('class-semester-filter', data.hocKy, 'mahocky', 'tenhocky');
+    setupSearch('class-search-input', api.getClasses, renderClassTable);
+}
+
+async function renderRegistrationView(data) {
+    // Sửa: Truyền data.dangKyHoc thay vì data
+    renderRegistrationTable(data.dangKyHoc);
+    populateSelect('registration-student-filter', data.sinhVien, 'masv', 'hotensv');
+    populateSelect('registration-class-filter', data.lopHoc, 'malop', 'malop'); // Có thể cải thiện để hiển thị tên môn
+}
+
+async function renderRoomView(data) {
+    // Sửa: Truyền data.phongHoc thay vì data
+    renderRoomTable(data.phongHoc);
+}
+
+async function renderMajorView(data) {
+    // Sửa: Truyền data.chuyenNganh thay vì data
+    renderMajorTable(data.chuyenNganh);
+    populateSelect('major-faculty-filter', data.khoa, 'makhoa', 'tenkhoa');
+}
+
+async function renderCourseView(data) {
+    // Sửa: Truyền data.khoaHoc thay vì data
+    renderCourseTable(data.khoaHoc);
+}
+
+async function renderFacultyView(data) {
+    // Sửa: Truyền data.khoa thay vì data
+    renderFacultyTable(data.khoa);
+}
+
+async function renderSemesterView(data) {
+    // Sửa: Truyền data.hocKy thay vì data
+    renderSemesterTable(data.hocKy);
+}
+
+// ----- CÁC HÀM RENDER BẢNG -----
 
 function renderDashboard(data) {
     document.getElementById('total-students').textContent = data.sinhVien?.length || 0;
@@ -118,9 +187,9 @@ function renderDashboard(data) {
     document.getElementById('total-classes').textContent = data.lopHoc?.length || 0;
 }
 
-function renderStudentView(data) {
+function renderStudentTable(data) {
     const tableBody = document.getElementById('student-table-body');
-    if (!tableBody || !data.sinhVien) return;
+    if (!tableBody || !data) return;
     
     tableBody.innerHTML = '';
     
@@ -144,10 +213,10 @@ function renderStudentView(data) {
         }
     });
 
-    data.sinhVien.forEach(sv => {
-        const cn = data.chuyenNganh.find(c => c.machuyennganh === sv.machuyennganh)?.tenchuyennganh || 'N/A';
-        const kh = data.khoaHoc.find(k => k.makhoahoc === sv.makhoahoc)?.tenkhoahoc || 'N/A';
-        const lhdt = data.loaiHinhDaoTao.find(l => l.malhdt === sv.malhdt)?.tenlhdt || 'N/A';
+    data.forEach(sv => {
+        const cn = AppData.chuyenNganh.find(c => c.machuyennganh === sv.machuyennganh)?.tenchuyennganh || 'N/A';
+        const kh = AppData.khoaHoc.find(k => k.makhoahoc === sv.makhoahoc)?.tenkhoahoc || 'N/A';
+        const lhdt = AppData.loaiHinhDaoTao.find(l => l.malhdt === sv.malhdt)?.tenlhdt || 'N/A';
         const row = document.createElement('tr');
         row.className = 'border-b';
         row.innerHTML = `
@@ -170,14 +239,14 @@ function renderStudentView(data) {
     });
     
     lucide.createIcons();
-    populateSelect('student-modal-chuyennganh', data.chuyenNganh, 'machuyennganh', 'tenchuyennganh');
-    populateSelect('student-modal-khoahoc', data.khoaHoc, 'makhoahoc', 'tenkhoahoc');
-    populateSelect('student-modal-lhdt', data.loaiHinhDaoTao, 'malhdt', 'tenlhdt');
+    populateSelect('student-modal-chuyennganh', AppData.chuyenNganh, 'machuyennganh', 'tenchuyennganh');
+    populateSelect('student-modal-khoahoc', AppData.khoaHoc, 'makhoahoc', 'tenkhoahoc');
+    populateSelect('student-modal-lhdt', AppData.loaiHinhDaoTao, 'malhdt', 'tenlhdt');
 }
 
-function renderLecturerView(data) {
+function renderLecturerTable(data) {
     const tableBody = document.getElementById('lecturer-table-body');
-    if (!tableBody || !data.giangVien) return;
+    if (!tableBody || !data) return;
 
     tableBody.innerHTML = '';
     
@@ -198,8 +267,8 @@ function renderLecturerView(data) {
         }
     });
 
-    data.giangVien.forEach(gv => {
-        const khoa = data.khoa.find(k => k.makhoa === gv.makhoa)?.tenkhoa || 'N/A';
+    data.forEach(gv => {
+        const khoa = AppData.khoa.find(k => k.makhoa === gv.makhoa)?.tenkhoa || 'N/A';
         const row = document.createElement('tr');
         row.className = 'border-b';
         row.innerHTML = `
@@ -220,13 +289,13 @@ function renderLecturerView(data) {
     });
     
     lucide.createIcons();
-    populateSelect('lecturer-modal-khoa', data.khoa, 'makhoa', 'tenkhoa');
+    populateSelect('lecturer-modal-khoa', AppData.khoa, 'makhoa', 'tenkhoa');
 }
 
 
-function renderSubjectView(data) {
+function renderSubjectTable(data) {
     const tableBody = document.getElementById('subject-table-body');
-    if (!tableBody || !data.monHoc) return;
+    if (!tableBody || !data) return;
     
     tableBody.innerHTML = '';
 
@@ -250,8 +319,8 @@ function renderSubjectView(data) {
         }
     });
 
-    data.monHoc.forEach(mh => {
-        const cn = data.chuyenNganh.find(c => c.machuyennganh === mh.machuyennganh)?.tenchuyennganh || 'N/A';
+    data.forEach(mh => {
+        const cn = AppData.chuyenNganh.find(c => c.machuyennganh === mh.machuyennganh)?.tenchuyennganh || 'N/A';
         const row = document.createElement('tr');
         row.className = 'border-b';
         row.innerHTML = `
@@ -274,13 +343,13 @@ function renderSubjectView(data) {
     });
 
     lucide.createIcons();
-    populateSelect('subject-modal-chuyennganh', data.chuyenNganh, 'machuyennganh', 'tenchuyennganh');
+    populateSelect('subject-modal-chuyennganh', AppData.chuyenNganh, 'machuyennganh', 'tenchuyennganh');
 }
 
 
-function renderClassView(data) {
+function renderClassTable(data) {
     const tableBody = document.getElementById('class-table-body');
-    if (!tableBody || !data.lopHoc) return;
+    if (!tableBody || !data) return;
     
     tableBody.innerHTML = '';
     
@@ -306,9 +375,9 @@ function renderClassView(data) {
         }
     });
 
-    data.lopHoc.forEach(lh => {
-        const mh = data.monHoc.find(m => m.mamh === lh.mamh)?.tenmh || 'N/A';
-        const gv = data.giangVien.find(g => g.magv === lh.magv)?.hotengv || 'N/A';
+    data.forEach(lh => {
+        const mh = AppData.monHoc.find(m => m.mamh === lh.mamh)?.tenmh || 'N/A';
+        const gv = AppData.giangVien.find(g => g.magv === lh.magv)?.hotengv || 'N/A';
         const row = document.createElement('tr');
         row.className = 'border-b';
         row.innerHTML = `
@@ -331,15 +400,15 @@ function renderClassView(data) {
     });
     
     lucide.createIcons();
-    populateSelect('class-modal-hocky', data.hocKy, 'mahocky', 'tenhocky');
-    populateSelect('class-modal-monhoc', data.monHoc, 'mamh', 'tenmh');
-    populateSelect('class-modal-giangvien', data.giangVien, 'magv', 'hotengv');
-    populateSelect('class-modal-phonghoc', data.phongHoc, 'maphong', 'maphong');
+    populateSelect('class-modal-hocky', AppData.hocKy, 'mahocky', 'tenhocky');
+    populateSelect('class-modal-monhoc', AppData.monHoc, 'mamh', 'tenmh');
+    populateSelect('class-modal-giangvien', AppData.giangVien, 'magv', 'hotengv');
+    populateSelect('class-modal-phonghoc', AppData.phongHoc, 'maphong', 'maphong');
 }
 
-function renderFacultyView(data) {
+function renderFacultyTable(data) {
     const tableBody = document.getElementById('faculty-table-body');
-    if (!tableBody || !data.khoa) return;
+    if (!tableBody || !data) return;
 
     tableBody.innerHTML = '';
     
@@ -359,7 +428,7 @@ function renderFacultyView(data) {
         }
     });
 
-    data.khoa.forEach(k => {
+    data.forEach(k => {
         const row = document.createElement('tr');
         row.className = 'border-b';
         row.innerHTML = `
@@ -381,9 +450,9 @@ function renderFacultyView(data) {
     lucide.createIcons();
 }
 
-function renderSemesterView(data) {
+function renderSemesterTable(data) {
     const tableBody = document.getElementById('semester-table-body');
-    if (!tableBody || !data.hocKy) return;
+    if (!tableBody || !data) return;
 
     tableBody.innerHTML = '';
 
@@ -403,7 +472,7 @@ function renderSemesterView(data) {
         }
     });
     
-    data.hocKy.forEach(hk => {
+    data.forEach(hk => {
         const row = document.createElement('tr');
         row.className = 'border-b';
         row.innerHTML = `
@@ -423,5 +492,103 @@ function renderSemesterView(data) {
     });
     
     lucide.createIcons();
+}
+
+// ----- CÁC HÀM RENDER THỐNG KÊ -----
+
+async function renderStudentReportView(data) {
+    const tableBody = document.getElementById('report-student-table-body');
+    const semesterFilter = document.getElementById('report-student-semester-filter');
+    if (!tableBody || !semesterFilter) return;
+
+    // Populate semester filter
+    populateSelect('report-student-semester-filter', data.hocKy, 'mahocky', 'tenhocky');
+    semesterFilter.onchange = () => renderStudentReportView(AppData); // Re-render on change
+
+    try {
+        const selectedSemester = semesterFilter.value;
+        const stats = await api.getStudentStats(selectedSemester);
+        tableBody.innerHTML = '';
+        stats.forEach(sv => {
+            const row = document.createElement('tr');
+            row.className = `border-b ${sv.academic_warning ? 'bg-red-100' : ''}`;
+            row.innerHTML = `
+                <td class="p-3">${sv.masv}</td>
+                <td class="p-3">${sv.hotensv}</td>
+                <td class="p-3">${sv.tenchuyennganh || 'N/A'}</td>
+                <td class="p-3 text-center">${parseFloat(sv.gpa_cumulative).toFixed(2)}</td>
+                <td class="p-3 text-center">${sv.total_subjects || 0}</td>
+                <td class="p-3 text-center">${sv.total_failed_credits || 0}</td>
+                <td class="p-3 text-center">${sv.academic_warning ? '<span class="text-red-600 font-bold">Có</span>' : 'Không'}</td>
+            `;
+            tableBody.appendChild(row);
+        });
+    } catch (error) {
+        showToast(`Lỗi tải thống kê: ${error.message}`, true);
+    }
+}
+
+async function renderLecturerReportView(data) {
+    const tableBody = document.getElementById('report-lecturer-table-body');
+    const semesterFilter = document.getElementById('report-lecturer-semester-filter');
+    if (!tableBody || !semesterFilter) return;
+
+    populateSelect('report-lecturer-semester-filter', data.hocKy, 'mahocky', 'tenhocky');
+    if (data.hocKy.length > 0 && !semesterFilter.value) {
+        semesterFilter.value = data.hocKy[0].mahocky; // Chọn học kỳ đầu tiên mặc định
+    }
+    semesterFilter.onchange = () => renderLecturerReportView(AppData);
+
+    try {
+        const selectedSemester = semesterFilter.value;
+        const stats = await api.getLecturerStats(selectedSemester);
+        tableBody.innerHTML = '';
+        stats.forEach(gv => {
+            const row = document.createElement('tr');
+            row.className = `border-b ${gv.workload_warning ? 'bg-yellow-100' : ''}`;
+            row.innerHTML = `
+                <td class="p-3">${gv.magv}</td>
+                <td class="p-3">${gv.hotengv}</td>
+                <td class="p-3">${gv.tenkhoa || 'N/A'}</td>
+                <td class="p-3 text-center">${gv.total_hours}</td>
+                <td class="p-3 text-right">${new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(gv.estimated_salary)}</td>
+                <td class="p-3 text-center">${gv.workload_warning ? '<span class="text-yellow-600 font-bold">Dưới ngưỡng</span>' : 'Đạt'}</td>
+            `;
+            tableBody.appendChild(row);
+        });
+    } catch (error) {
+        showToast(`Lỗi tải thống kê: ${error.message}`, true);
+    }
+}
+
+async function renderClassroomReportView(data) {
+    const tableBody = document.getElementById('report-classroom-table-body');
+    const semesterFilter = document.getElementById('report-classroom-semester-filter');
+    if (!tableBody || !semesterFilter) return;
+
+    populateSelect('report-classroom-semester-filter', data.hocKy, 'mahocky', 'tenhocky');
+    if (data.hocKy.length > 0 && !semesterFilter.value) {
+        semesterFilter.value = data.hocKy[0].mahocky;
+    }
+    semesterFilter.onchange = () => renderClassroomReportView(AppData);
+
+    try {
+        const selectedSemester = semesterFilter.value;
+        const stats = await api.getClassroomStats(selectedSemester);
+        tableBody.innerHTML = '';
+        stats.forEach(ph => {
+            const row = document.createElement('tr');
+            row.className = 'border-b';
+            row.innerHTML = `
+                <td class="p-3">${ph.maphong}</td>
+                <td class="p-3">${ph.tenphong}</td>
+                <td class="p-3 text-center">${ph.succhua}</td>
+                <td class="p-3 text-center font-bold">${ph.total_hours_used}</td>
+            `;
+            tableBody.appendChild(row);
+        });
+    } catch (error) {
+        showToast(`Lỗi tải thống kê: ${error.message}`, true);
+    }
 }
 

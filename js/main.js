@@ -62,6 +62,16 @@ async function router() {
         case 'semester':
             renderSemesterView(AppData);
             break;
+        // THÊM MỚI: Gọi hàm render cho các trang báo cáo
+        case 'report-student':
+            renderStudentReportView(AppData);
+            break;
+        case 'report-lecturer':
+            renderLecturerReportView(AppData);
+            break;
+        case 'report-classroom':
+            renderClassroomReportView(AppData);
+            break;
     }
 }
 

@@ -1,0 +1,24 @@
+<div class="bg-white p-4 rounded-lg shadow-md">
+    <div class="flex justify-between items-center mb-4">
+        <h2 class="text-xl font-semibold">Thống kê sử dụng Phòng học</h2>
+        <div>
+            <label for="report-classroom-semester-filter" class="mr-2">Chọn học kỳ:</label>
+            <select id="report-classroom-semester-filter" class="border rounded-md px-3 py-2"></select>
+        </div>
+    </div>
+    <div class="overflow-x-auto">
+        <table class="w-full text-left">
+            <thead>
+                <tr class="bg-gray-200">
+                    <th class="p-3">Mã Phòng</th>
+                    <th class="p-3">Tên Phòng</th>
+                    <th class="p-3 text-center">Sức chứa</th>
+                    <th class="p-3 text-center">Tổng giờ sử dụng</th>
+                </tr>
+            </thead>
+            <tbody id="report-classroom-table-body">
+                <!-- Dữ liệu sẽ được chèn vào đây -->
+            </tbody>
+        </table>
+    </div>
+</div>
