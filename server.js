@@ -36,31 +36,31 @@ pool.connect((err, client, release) => {
 // =============================================================================
 app.get('/api/alldata', async (req, res) => {
     try {
-        const [khoa, chuyenNganh, giangVien, khoaHoc, sinhVien, monHoc, hocKy, lopHoc, dangKyHoc, phongHoc, loaiHinhDaoTao] = await Promise.all([
+        const [khoa] = await Promise.all([
             pool.query('SELECT * FROM "khoa" ORDER BY "makhoa"'),
-            pool.query('SELECT * FROM "chuyennganh"'),
-            pool.query('SELECT * FROM "giangvien" ORDER BY "magv"'),
-            pool.query('SELECT * FROM "khoahoc"'),
-            pool.query('SELECT * FROM "sinhvien" ORDER BY "masv"'),
-            pool.query('SELECT * FROM "monhoc" ORDER BY "mamh"'),
-            pool.query('SELECT * FROM "hocky" ORDER BY "mahocky"'),
-            pool.query('SELECT * FROM "lophoc" ORDER BY "malop"'),
-            pool.query('SELECT * FROM "dangkyhoc"'),
-            pool.query('SELECT * FROM "phonghoc"'),
-            pool.query('SELECT * FROM "loaihinhdaotao"')
+            // pool.query('SELECT * FROM "chuyennganh"'),
+            // pool.query('SELECT * FROM "giangvien" ORDER BY "magv"'),
+            // pool.query('SELECT * FROM "khoahoc"'),
+            // pool.query('SELECT * FROM "sinhvien" ORDER BY "masv"'),
+            // pool.query('SELECT * FROM "monhoc" ORDER BY "mamh"'),
+            // pool.query('SELECT * FROM "hocky" ORDER BY "mahocky"'),
+            // pool.query('SELECT * FROM "lophoc" ORDER BY "malop"'),
+            // pool.query('SELECT * FROM "dangkyhoc"'),
+            // pool.query('SELECT * FROM "phonghoc"'),
+            // pool.query('SELECT * FROM "loaihinhdaotao"')
         ]);
         res.json({
             khoa: khoa.rows,
-            chuyenNganh: chuyenNganh.rows,
-            giangVien: giangVien.rows,
-            khoaHoc: khoaHoc.rows,
-            sinhVien: sinhVien.rows,
-            monHoc: monHoc.rows,
-            hocKy: hocKy.rows,
-            lopHoc: lopHoc.rows,
-            dangKyHoc: dangKyHoc.rows,
-            phongHoc: phongHoc.rows,
-            loaiHinhDaoTao: loaiHinhDaoTao.rows
+            chuyenNganh: [],
+            giangVien: [],
+            khoaHoc: [],
+            sinhVien: [],
+            monHoc: [],
+            hocKy: [],
+            lopHoc: [],
+            dangKyHoc: [],
+            phongHoc: [],
+            loaiHinhDaoTao: []
         });
     } catch (err) {
         console.error('Lỗi API /alldata:', err.message);
@@ -106,6 +106,27 @@ app.delete('/api/students/:id', async (req, res) => {
     } catch (err) { console.error(err.message); res.status(500).json({ error: err.message }); }
 });
 
+// Lấy tất cả sinh viên
+app.get('/api/students', async (req, res) => {
+    const { search } = req.query;
+    try {
+        let query = `
+            SELECT sv.*, cn.tenchuyennganh, kh.tenkhoahoc 
+            FROM sinhvien sv
+            LEFT JOIN chuyennganh cn ON sv.machuyennganh = cn.machuyennganh
+            LEFT JOIN khoahoc kh ON sv.makhoahoc = kh.makhoahoc
+        `;
+        const params = [];
+        if (search) {
+            query += ' WHERE sv.masv ILIKE $1 OR sv.hotensv ILIKE $1';
+            params.push(`%${search}%`);
+        }
+        query += ' ORDER BY sv.masv';
+        
+        const { rows } = await pool.query(query, params);
+        res.json(rows);
+    } catch (err) { console.error(err.message); res.status(500).json({ error: err.message }); }
+});
 
 // =============================================================================
 // API CRUD CHO GIẢNG VIÊN (Lecturer)
@@ -141,6 +162,25 @@ app.delete('/api/lecturers/:id', async (req, res) => {
     try {
         await pool.query('DELETE FROM "giangvien" WHERE "magv" = $1', [id]);
         res.json({ message: 'Xóa giảng viên thành công' });
+    } catch (err) { console.error(err.message); res.status(500).json({ error: err.message }); }
+});
+
+// Lấy tất cả giảng viên
+app.get('/api/lecturers', async (req, res) => {
+    const { search } = req.query;
+    console.log('Search term received:', search); // Log the search term
+    try {
+        let query = 'SELECT * FROM giangvien';
+        const params = [];
+        // if (search) {
+        //     query += ' WHERE magv ILIKE $1 OR hotengv ILIKE $1';
+        //     params.push(`%${search}%`);
+        // }
+        query += ' ORDER BY magv';
+
+        console.log('Executing query:', query, params); // Log the query and params
+        const { rows } = await pool.query(query, params);
+        res.json(rows);
     } catch (err) { console.error(err.message); res.status(500).json({ error: err.message }); }
 });
 
@@ -181,6 +221,23 @@ app.delete('/api/subjects/:id', async (req, res) => {
     } catch (err) { console.error(err.message); res.status(500).json({ error: err.message }); }
 });
 
+// Lấy tất cả môn học
+app.get('/api/subjects', async (req, res) => {
+    const { search } = req.query;
+    try {
+        let query = 'SELECT * FROM monhoc';
+        const params = [];
+        if (search) {
+            query += ' WHERE mamh ILIKE $1 OR tenmh ILIKE $1';
+            params.push(`%${search}%`);
+        }
+        query += ' ORDER BY mamh';
+
+        const { rows } = await pool.query(query, params);
+        res.json(rows);
+    } catch (err) { console.error(err.message); res.status(500).json({ error: err.message }); }
+});
+
 // =============================================================================
 // API CRUD CHO LỚP HỌC (Class)
 // =============================================================================
@@ -215,6 +272,31 @@ app.delete('/api/classes/:id', async (req, res) => {
     try {
         await pool.query('DELETE FROM "lophoc" WHERE "malop" = $1', [id]);
         res.json({ message: 'Xóa lớp học thành công' });
+    } catch (err) { console.error(err.message); res.status(500).json({ error: err.message }); }
+});
+
+// Lấy tất cả lớp học
+app.get('/api/classes', async (req, res) => {
+    const { search } = req.query;
+    try {
+        let query = `
+            SELECT lh.*, mh.tenmh, gv.hotengv, ph.tenphong, hk.tenhocky 
+            FROM lophoc lh
+            LEFT JOIN monhoc mh ON lh.mamh = mh.mamh
+            LEFT JOIN giangvien gv ON lh.magv = gv.magv
+            LEFT JOIN phonghoc ph ON lh.maphong = ph.maphong
+            LEFT JOIN hocky hk ON lh.mahocky = hk.mahocky
+        `;
+        const params = [];
+        if (search) {
+            // Tìm kiếm theo mã lớp hoặc tên môn học
+            query += ' WHERE lh.malop ILIKE $1 OR mh.tenmh ILIKE $1';
+            params.push(`%${search}%`);
+        }
+        query += ' ORDER BY lh.malop';
+
+        const { rows } = await pool.query(query, params);
+        res.json(rows);
     } catch (err) { console.error(err.message); res.status(500).json({ error: err.message }); }
 });
 
@@ -293,7 +375,152 @@ app.delete('/api/semesters/:id', async (req, res) => {
 });
 
 
-app.listen(port, () => {
-  console.log(`Backend server đang chạy tại http://localhost:${port}`);
+// =============================================================================
+// API THỐNG KÊ & BÁO CÁO
+// =============================================================================
+
+// Thống kê điểm sinh viên và cảnh báo học tập
+app.get('/api/statistics/student-gpa', async (req, res) => {
+    const { hocky } = req.query;
+    const GPA_WARNING_THRESHOLD = 2.0;
+    const FAILED_CREDITS_THRESHOLD = 10;
+    const PASSING_GRADE = 4.0; // Điểm qua môn trên thang 10
+
+    try {
+        // SỬA LỖI: Sử dụng đúng tên cột diem_qt, diem_ck.
+        // Giả định trọng số điểm: 30% quá trình, 70% cuối kỳ.
+        const query = `
+            WITH StudentGrades AS (
+                SELECT
+                    dk.masv,
+                    lh.mahocky,
+                    mh.mamh,
+                    mh.sotinchi,
+                    (dk.diem_qt * 0.3 + dk.diem_ck * 0.7) AS final_grade,
+                    (CASE WHEN (dk.diem_qt * 0.3 + dk.diem_ck * 0.7) >= ${PASSING_GRADE} THEN 1 ELSE 0 END) AS passed
+                FROM dangkyhoc dk
+                JOIN lophoc lh ON dk.malop = lh.malop
+                JOIN monhoc mh ON lh.mamh = mh.mamh
+                WHERE dk.diem_qt IS NOT NULL AND dk.diem_ck IS NOT NULL
+            ),
+            SemesterStats AS (
+                SELECT
+                    masv,
+                    mahocky,
+                    SUM(final_grade * sotinchi) / SUM(sotinchi) AS gpa_semester,
+                    SUM(CASE WHEN passed = 0 THEN sotinchi ELSE 0 END) AS failed_credits_semester
+                FROM StudentGrades
+                GROUP BY masv, mahocky
+            ),
+            CumulativeStats AS (
+                SELECT
+                    masv,
+                    SUM(final_grade * sotinchi) / SUM(sotinchi) AS gpa_cumulative,
+                    COUNT(DISTINCT mamh) as total_subjects,
+                    SUM(CASE WHEN passed = 0 THEN sotinchi ELSE 0 END) AS total_failed_credits
+                FROM StudentGrades
+                GROUP BY masv
+            )
+            SELECT
+                sv.masv,
+                sv.hotensv,
+                cn.tenchuyennganh,
+                kh.tenkhoahoc,
+                cs.gpa_cumulative,
+                cs.total_subjects,
+                cs.total_failed_credits,
+                (cs.gpa_cumulative < ${GPA_WARNING_THRESHOLD} OR cs.total_failed_credits > ${FAILED_CREDITS_THRESHOLD}) as academic_warning,
+                json_agg(json_build_object('hocky', ss.mahocky, 'gpa', ss.gpa_semester)) FILTER (WHERE ss.mahocky IS NOT NULL) AS semester_details
+            FROM sinhvien sv
+            LEFT JOIN CumulativeStats cs ON sv.masv = cs.masv
+            LEFT JOIN SemesterStats ss ON sv.masv = ss.masv
+            LEFT JOIN chuyennganh cn ON sv.machuyennganh = cn.machuyennganh
+            LEFT JOIN khoahoc kh ON sv.makhoahoc = kh.makhoahoc
+            ${hocky ? `WHERE ss.mahocky = '${hocky}'` : ''}
+            GROUP BY sv.masv, sv.hotensv, cn.tenchuyennganh, kh.tenkhoahoc, cs.gpa_cumulative, cs.total_subjects, cs.total_failed_credits
+            ORDER BY cs.total_subjects DESC, cs.total_failed_credits DESC;
+        `;
+
+        const { rows } = await pool.query(query);
+        res.json(rows);
+    } catch (err) {
+        console.error('Lỗi API /statistics/student-gpa:', err.message);
+        res.status(500).json({ error: 'Lỗi server khi lấy dữ liệu thống kê sinh viên' });
+    }
 });
+
+// Thống kê giờ dạy và lương giảng viên
+app.get('/api/statistics/lecturer-workload', async (req, res) => {
+    const { hocky } = req.query;
+    if (!hocky) {
+        return res.status(400).json({ error: 'Vui lòng cung cấp mã học kỳ (hocky).' });
+    }
+    const MIN_TEACHING_HOURS = 100;
+    const SALARY_PER_HOUR = 150000;
+
+    try {
+        // SỬA LỖI: Sử dụng đúng tên cột sotiet_lt, sotiet_th từ bảng monhoc.
+        const query = `
+            SELECT
+                gv.magv,
+                gv.hotengv,
+                k.tenkhoa,
+                COALESCE(SUM(mh.sotiet_lt + mh.sotiet_th), 0) AS total_hours,
+                (COALESCE(SUM(mh.sotiet_lt + mh.sotiet_th), 0) * ${SALARY_PER_HOUR}) AS estimated_salary,
+                (COALESCE(SUM(mh.sotiet_lt + mh.sotiet_th), 0) < ${MIN_TEACHING_HOURS}) AS workload_warning
+            FROM giangvien gv
+            LEFT JOIN khoa k ON gv.makhoa = k.makhoa
+            LEFT JOIN lophoc lh ON gv.magv = lh.magv AND lh.mahocky = $1
+            LEFT JOIN monhoc mh ON lh.mamh = mh.mamh
+            GROUP BY gv.magv, gv.hotengv, k.tenkhoa
+            ORDER BY total_hours DESC;
+        `;
+        const { rows } = await pool.query(query, [hocky]);
+        res.json(rows);
+    } catch (err) {
+        console.error('Lỗi API /statistics/lecturer-workload:', err.message);
+        res.status(500).json({ error: 'Lỗi server khi lấy dữ liệu thống kê giảng viên' });
+    }
+});
+
+// Thống kê tần suất sử dụng phòng học
+app.get('/api/statistics/classroom-usage', async (req, res) => {
+    const { hocky } = req.query;
+    if (!hocky) {
+        return res.status(400).json({ error: 'Vui lòng cung cấp mã học kỳ (hocky).' });
+    }
+    try {
+        // SỬA LỖI: Sử dụng sotiet_lt, sotiet_th và thay toanha bằng tenphong.
+        const query = `
+            SELECT
+                ph.maphong,
+                ph.tenphong,
+                ph.succhua,
+                COALESCE(SUM(mh.sotiet_lt + mh.sotiet_th), 0) AS total_hours_used
+            FROM phonghoc ph
+            LEFT JOIN lophoc lh ON ph.maphong = lh.maphong AND lh.mahocky = $1
+            LEFT JOIN monhoc mh ON lh.mamh = mh.mamh
+            GROUP BY ph.maphong, ph.tenphong, ph.succhua
+            ORDER BY total_hours_used DESC;
+        `;
+        const { rows } = await pool.query(query, [hocky]);
+        res.json(rows);
+    } catch (err) {
+        console.error('Lỗi API /statistics/classroom-usage:', err.message);
+        res.status(500).json({ error: 'Lỗi server khi lấy dữ liệu thống kê phòng học' });
+    }
+});
+
+
+setInterval(() => {
+    console.log('Server process is still alive.');
+}, 5000);
+
+try {
+    app.listen(port, () => {
+        console.log(`Backend server đang chạy tại http://localhost:${port}`);
+    });
+} catch (err) {
+    console.error('Error starting server:', err.message);
+}
 

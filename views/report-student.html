@@ -1,0 +1,27 @@
+<div class="bg-white p-4 rounded-lg shadow-md">
+    <div class="flex justify-between items-center mb-4">
+        <h2 class="text-xl font-semibold">Thống kê Sinh viên & Cảnh báo học tập</h2>
+        <div>
+            <label for="report-student-semester-filter" class="mr-2">Chọn học kỳ:</label>
+            <select id="report-student-semester-filter" class="border rounded-md px-3 py-2"></select>
+        </div>
+    </div>
+    <div class="overflow-x-auto">
+        <table class="w-full text-left">
+            <thead>
+                <tr class="bg-gray-200">
+                    <th class="p-3">Mã SV</th>
+                    <th class="p-3">Họ Tên</th>
+                    <th class="p-3">Chuyên ngành</th>
+                    <th class="p-3 text-center">GPA Tích lũy</th>
+                    <th class="p-3 text-center">Tổng số môn</th>
+                    <th class="p-3 text-center">Tín chỉ nợ</th>
+                    <th class="p-3 text-center">Cảnh báo</th>
+                </tr>
+            </thead>
+            <tbody id="report-student-table-body">
+                <!-- Dữ liệu sẽ được chèn vào đây -->
+            </tbody>
+        </table>
+    </div>
+</div>

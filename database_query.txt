@@ -1,0 +1,596 @@
+-- =============================================================================
+-- Tệp: university_management.sql
+-- Mô tả: Script tạo cơ sở dữ liệu quản lý dạy học theo tín chỉ trên PostgreSQL.
+-- Bao gồm: Tạo bảng, ràng buộc, hàm, trigger và chèn dữ liệu mẫu.
+-- =============================================================================
+
+-- Xóa các bảng nếu đã tồn tại để chạy lại script từ đầu
+DROP TABLE IF EXISTS DangKyHoc CASCADE;
+DROP TABLE IF EXISTS LopHoc CASCADE;
+DROP TABLE IF EXISTS MonHocTienQuyet CASCADE;
+DROP TABLE IF EXISTS MonHoc CASCADE;
+DROP TABLE IF EXISTS SinhVien CASCADE;
+DROP TABLE IF EXISTS GiangVien CASCADE;
+DROP TABLE IF EXISTS ChuyenNganh CASCADE;
+DROP TABLE IF EXISTS Khoa CASCADE;
+DROP TABLE IF EXISTS PhongHoc CASCADE;
+DROP TABLE IF EXISTS HocKy CASCADE;
+DROP TABLE IF EXISTS KhoaHoc CASCADE;
+DROP TABLE IF EXISTS LoaiHinhDaoTao CASCADE;
+
+--SELECT * FROM SinhVien;
+
+-- =============================================================================
+-- PHẦN 1: TẠO CÁC BẢNG DỮ LIỆU (CREATE TABLES)
+-- =============================================================================
+
+-- Bảng Khoa
+CREATE TABLE Khoa (
+    MaKhoa VARCHAR(10) PRIMARY KEY,
+    TenKhoa VARCHAR(100) NOT NULL UNIQUE
+);
+
+-- Bảng Chuyên ngành
+CREATE TABLE ChuyenNganh (
+    MaChuyenNganh VARCHAR(10) PRIMARY KEY,
+    TenChuyenNganh VARCHAR(100) NOT NULL UNIQUE,
+    MaKhoa VARCHAR(10) NOT NULL,
+    FOREIGN KEY (MaKhoa) REFERENCES Khoa(MaKhoa) ON DELETE RESTRICT
+);
+
+-- Bảng Giảng viên
+CREATE TABLE GiangVien (
+    MaGV VARCHAR(10) PRIMARY KEY,
+    HoTenGV VARCHAR(100) NOT NULL,
+    MaKhoa VARCHAR(10) NOT NULL,
+    FOREIGN KEY (MaKhoa) REFERENCES Khoa(MaKhoa) ON DELETE RESTRICT
+);
+
+-- Bảng Khóa học (niên khóa, ví dụ: K18)
+CREATE TABLE KhoaHoc (
+    MaKhoaHoc VARCHAR(10) PRIMARY KEY,
+    TenKhoaHoc VARCHAR(50) NOT NULL,
+    NamBatDau INT NOT NULL
+);
+
+-- Bảng Loại hình đào tạo (chính quy, tại chức, ...)
+CREATE TABLE LoaiHinhDaoTao (
+    MaLHDT VARCHAR(10) PRIMARY KEY,
+    TenLHDT VARCHAR(50) NOT NULL
+);
+
+-- Bảng Sinh viên
+CREATE TABLE SinhVien (
+    MaSV VARCHAR(20) PRIMARY KEY,
+    HoTenSV VARCHAR(100) NOT NULL,
+    MaChuyenNganh VARCHAR(10) NOT NULL,
+    MaKhoaHoc VARCHAR(10) NOT NULL,
+    MaLHDT VARCHAR(10) NOT NULL,
+    FOREIGN KEY (MaChuyenNganh) REFERENCES ChuyenNganh(MaChuyenNganh) ON DELETE RESTRICT,
+    FOREIGN KEY (MaKhoaHoc) REFERENCES KhoaHoc(MaKhoaHoc) ON DELETE RESTRICT,
+    FOREIGN KEY (MaLHDT) REFERENCES LoaiHinhDaoTao(MaLHDT) ON DELETE RESTRICT,
+    -- Ràng buộc định dạng Mã SV: K<MaKhoaHoc>.<MaKhoa>.<MaLHDT>.<Số thứ tự>
+    CONSTRAINT check_masv_format CHECK (MaSV ~ '^[A-Z0-9]+\.[A-Z0-9]+\.[A-Z0-9]+\.[0-9]+$')
+);
+
+-- Bảng Môn học
+CREATE TABLE MonHoc (
+    MaMH VARCHAR(15) PRIMARY KEY,
+    TenMH VARCHAR(100) NOT NULL,
+    SoTinChi INT NOT NULL CHECK (SoTinChi > 0),
+    SoTiet INT NOT NULL CHECK (SoTiet > 0),
+    MaChuyenNganh VARCHAR(10) NOT NULL,
+    LaMonCoBan BOOLEAN DEFAULT FALSE,
+    FOREIGN KEY (MaChuyenNganh) REFERENCES ChuyenNganh(MaChuyenNganh) ON DELETE RESTRICT,
+    -- Ràng buộc định dạng Mã Môn học: <MaKhoa>.<MaChuyenNganh>.<Số thứ tự>
+    CONSTRAINT check_mamh_format CHECK (MaMH ~ '^[A-Z0-9]+\.[A-Z0-9]+\.[0-9]+$')
+);
+
+-- Bảng Môn học tiên quyết
+CREATE TABLE MonHocTienQuyet (
+    MaMH VARCHAR(15) NOT NULL,
+    MaMHTienQuyet VARCHAR(15) NOT NULL,
+    PRIMARY KEY (MaMH, MaMHTienQuyet),
+    FOREIGN KEY (MaMH) REFERENCES MonHoc(MaMH) ON DELETE CASCADE,
+    FOREIGN KEY (MaMHTienQuyet) REFERENCES MonHoc(MaMH) ON DELETE CASCADE,
+    CONSTRAINT check_self_prerequisite CHECK (MaMH <> MaMHTienQuyet)
+);
+
+-- Bảng Phòng học
+CREATE TABLE PhongHoc (
+    MaPhong VARCHAR(10) PRIMARY KEY,
+    SoGhe INT NOT NULL CHECK (SoGhe > 0)
+);
+
+-- Bảng Học kỳ
+CREATE TABLE HocKy (
+    MaHocKy VARCHAR(10) PRIMARY KEY, -- Ví dụ: '20241', '20242'
+    TenHocKy VARCHAR(50) NOT NULL,
+    NgayBatDau DATE NOT NULL,
+    NgayKetThuc DATE NOT NULL
+);
+
+-- Bảng Lớp học (lớp của một môn học trong một học kỳ cụ thể)
+CREATE TABLE LopHoc (
+    MaLop VARCHAR(15) PRIMARY KEY,
+    MaMH VARCHAR(15) NOT NULL,
+    MaHocKy VARCHAR(10) NOT NULL,
+    MaGV VARCHAR(10) NOT NULL,
+    MaPhong VARCHAR(10) NOT NULL,
+    Thu INT NOT NULL CHECK (Thu BETWEEN 2 AND 8), -- 2: Thứ 2, 8: Chủ Nhật
+    TietBatDau INT NOT NULL CHECK (TietBatDau > 0),
+    SoTietHoc INT NOT NULL CHECK (SoTietHoc > 0),
+    FOREIGN KEY (MaMH) REFERENCES MonHoc(MaMH) ON DELETE RESTRICT,
+    FOREIGN KEY (MaHocKy) REFERENCES HocKy(MaHocKy) ON DELETE RESTRICT,
+    FOREIGN KEY (MaGV) REFERENCES GiangVien(MaGV) ON DELETE RESTRICT,
+    FOREIGN KEY (MaPhong) REFERENCES PhongHoc(MaPhong) ON DELETE RESTRICT
+);
+
+-- Bảng Đăng ký học
+CREATE TABLE DangKyHoc (
+    MaSV VARCHAR(20) NOT NULL,
+    MaLop VARCHAR(15) NOT NULL,
+    Diem DECIMAL(4, 2) CHECK (Diem >= 0 AND Diem <= 10),
+    PRIMARY KEY (MaSV, MaLop),
+    FOREIGN KEY (MaSV) REFERENCES SinhVien(MaSV) ON DELETE CASCADE,
+    FOREIGN KEY (MaLop) REFERENCES LopHoc(MaLop) ON DELETE CASCADE
+);
+
+-- =============================================================================
+-- PHẦN 2: TẠO CÁC HÀM VÀ TRIGGER (FUNCTIONS & TRIGGERS)
+-- =============================================================================
+
+-- -----------------------------------------------------------------------------
+-- Ràng buộc: Mỗi học kỳ, sinh viên không học 1 môn quá 1 lần
+-- -----------------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION fn_check_duplicate_subject_in_semester()
+RETURNS TRIGGER AS $$
+DECLARE
+    v_ma_mh VARCHAR;
+    v_ma_hk VARCHAR;
+    v_count INT;
+BEGIN
+    -- Lấy MaMH và MaHocKy từ lớp học mới được đăng ký
+    SELECT MaMH, MaHocKy INTO v_ma_mh, v_ma_hk FROM LopHoc WHERE MaLop = NEW.MaLop;
+
+    -- Đếm số lần SV đã đăng ký môn học này trong kỳ này (trừ lần đang thêm)
+    SELECT COUNT(*) INTO v_count
+    FROM DangKyHoc dkh
+    JOIN LopHoc lh ON dkh.MaLop = lh.MaLop
+    WHERE dkh.MaSV = NEW.MaSV
+      AND lh.MaMH = v_ma_mh
+      AND lh.MaHocKy = v_ma_hk;
+
+    IF v_count > 0 THEN
+        RAISE EXCEPTION 'Sinh viên % đã đăng ký môn học % trong học kỳ %.', NEW.MaSV, v_ma_mh, v_ma_hk;
+    END IF;
+
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trg_check_duplicate_subject
+BEFORE INSERT ON DangKyHoc
+FOR EACH ROW
+EXECUTE FUNCTION fn_check_duplicate_subject_in_semester();
+
+
+-- -----------------------------------------------------------------------------
+-- Ràng buộc: Sinh viên chỉ được học tối đa 20 tín chỉ mỗi kỳ
+-- -----------------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION fn_check_max_credits_per_semester()
+RETURNS TRIGGER AS $$
+DECLARE
+    v_total_credits INT;
+    v_new_credits INT;
+    v_ma_hk VARCHAR;
+BEGIN
+    -- Lấy học kỳ của lớp đang đăng ký
+    SELECT MaHocKy INTO v_ma_hk FROM LopHoc WHERE MaLop = NEW.MaLop;
+
+    -- Tính tổng số tín chỉ SV đã đăng ký trong kỳ
+    SELECT COALESCE(SUM(mh.SoTinChi), 0)
+    INTO v_total_credits
+    FROM DangKyHoc dkh
+    JOIN LopHoc lh ON dkh.MaLop = lh.MaLop
+    JOIN MonHoc mh ON lh.MaMH = mh.MaMH
+    WHERE dkh.MaSV = NEW.MaSV AND lh.MaHocKy = v_ma_hk;
+
+    -- Lấy số tín chỉ của môn học mới
+    SELECT mh.SoTinChi INTO v_new_credits
+    FROM LopHoc lh JOIN MonHoc mh ON lh.MaMH = mh.MaMH
+    WHERE lh.MaLop = NEW.MaLop;
+
+    IF (v_total_credits + v_new_credits) > 20 THEN
+        RAISE EXCEPTION 'Sinh viên % không thể đăng ký quá 20 tín chỉ trong học kỳ %.', NEW.MaSV, v_ma_hk;
+    END IF;
+
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trg_check_max_credits
+BEFORE INSERT ON DangKyHoc
+FOR EACH ROW
+EXECUTE FUNCTION fn_check_max_credits_per_semester();
+
+-- -----------------------------------------------------------------------------
+-- Ràng buộc: Sinh viên phải hoàn thành môn tiên quyết
+-- -----------------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION fn_check_prerequisites()
+RETURNS TRIGGER AS $$
+DECLARE
+    v_prerequisite_mh VARCHAR;
+    v_passed_count INT;
+    v_total_prerequisites INT;
+    v_ma_mh_new VARCHAR;
+BEGIN
+    -- Lấy mã môn học của lớp đang đăng ký
+    SELECT MaMH INTO v_ma_mh_new FROM LopHoc WHERE MaLop = NEW.MaLop;
+
+    -- Đếm tổng số môn tiên quyết
+    SELECT COUNT(*) INTO v_total_prerequisites FROM MonHocTienQuyet WHERE MaMH = v_ma_mh_new;
+
+    IF v_total_prerequisites > 0 THEN
+        -- Đếm số môn tiên quyết mà SV đã qua (điểm >= 4.0)
+        SELECT COUNT(DISTINCT mhtq.MaMHTienQuyet)
+        INTO v_passed_count
+        FROM MonHocTienQuyet mhtq
+        JOIN LopHoc lh ON lh.MaMH = mhtq.MaMHTienQuyet
+        JOIN DangKyHoc dkh ON dkh.MaLop = lh.MaLop
+        WHERE mhtq.MaMH = v_ma_mh_new
+          AND dkh.MaSV = NEW.MaSV
+          AND dkh.Diem >= 4.0;
+
+        IF v_passed_count < v_total_prerequisites THEN
+            RAISE EXCEPTION 'Sinh viên % chưa hoàn thành tất cả các môn tiên quyết cho môn học %.', NEW.MaSV, v_ma_mh_new;
+        END IF;
+    END IF;
+
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trg_check_prerequisites
+BEFORE INSERT ON DangKyHoc
+FOR EACH ROW
+EXECUTE FUNCTION fn_check_prerequisites();
+
+-- -----------------------------------------------------------------------------
+-- Ràng buộc: Sinh viên chỉ được học tối đa 3 môn không thuộc chuyên ngành
+-- -----------------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION fn_check_out_of_major_subjects()
+RETURNS TRIGGER AS $$
+DECLARE
+    v_student_major VARCHAR;
+    v_subject_major VARCHAR;
+    v_is_basic_subject BOOLEAN;
+    v_count_out_of_major INT;
+    v_ma_mh_new VARCHAR;
+BEGIN
+    -- Lấy chuyên ngành của sinh viên
+    SELECT MaChuyenNganh INTO v_student_major FROM SinhVien WHERE MaSV = NEW.MaSV;
+    -- Lấy thông tin môn học mới
+    SELECT mh.MaChuyenNganh, mh.LaMonCoBan, mh.MaMH
+    INTO v_subject_major, v_is_basic_subject, v_ma_mh_new
+    FROM LopHoc lh JOIN MonHoc mh ON lh.MaMH = mh.MaMH
+    WHERE lh.MaLop = NEW.MaLop;
+
+    -- Nếu môn học thuộc chuyên ngành hoặc là môn cơ bản thì cho phép
+    IF v_student_major = v_subject_major OR v_is_basic_subject = TRUE THEN
+        RETURN NEW;
+    END IF;
+
+    -- Đếm số môn ngoài chuyên ngành (không phải cơ bản) SV đã học
+    SELECT COUNT(DISTINCT mh.MaMH)
+    INTO v_count_out_of_major
+    FROM DangKyHoc dkh
+    JOIN LopHoc lh ON dkh.MaLop = lh.MaLop
+    JOIN MonHoc mh ON lh.MaMH = mh.MaMH
+    WHERE dkh.MaSV = NEW.MaSV
+      AND mh.MaChuyenNganh <> v_student_major
+      AND mh.LaMonCoBan = FALSE;
+
+    IF v_count_out_of_major >= 3 THEN
+        RAISE EXCEPTION 'Sinh viên % đã học đủ 3 môn ngoài chuyên ngành. Không thể đăng ký thêm môn %.', NEW.MaSV, v_ma_mh_new;
+    END IF;
+
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trg_check_out_of_major_subjects
+BEFORE INSERT ON DangKyHoc
+FOR EACH ROW
+EXECUTE FUNCTION fn_check_out_of_major_subjects();
+
+-- -----------------------------------------------------------------------------
+-- Ràng buộc: Sĩ số lớp không vượt quá số ghế của phòng học
+-- -----------------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION fn_check_class_capacity()
+RETURNS TRIGGER AS $$
+DECLARE
+    v_current_students INT;
+    v_room_capacity INT;
+BEGIN
+    -- Đếm số sinh viên hiện tại trong lớp
+    SELECT COUNT(*) INTO v_current_students FROM DangKyHoc WHERE MaLop = NEW.MaLop;
+
+    -- Lấy số ghế của phòng học
+    SELECT ph.SoGhe INTO v_room_capacity
+    FROM LopHoc lh JOIN PhongHoc ph ON lh.MaPhong = ph.MaPhong
+    WHERE lh.MaLop = NEW.MaLop;
+
+    IF (v_current_students + 1) > v_room_capacity THEN
+        RAISE EXCEPTION 'Lớp học % đã đầy. Sĩ số không được vượt quá %.', NEW.MaLop, v_room_capacity;
+    END IF;
+
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trg_check_class_capacity
+BEFORE INSERT ON DangKyHoc
+FOR EACH ROW
+EXECUTE FUNCTION fn_check_class_capacity();
+
+
+-- -----------------------------------------------------------------------------
+-- Ràng buộc: Các lớp học không được trùng giờ tại một phòng học
+-- -----------------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION fn_check_schedule_conflict()
+RETURNS TRIGGER AS $$
+DECLARE
+    v_count INT;
+    v_tiet_ket_thuc_new INT;
+    v_tiet_ket_thuc_old INT;
+BEGIN
+    v_tiet_ket_thuc_new := NEW.TietBatDau + NEW.SoTietHoc - 1;
+
+    SELECT COUNT(*) INTO v_count
+    FROM LopHoc
+    WHERE MaPhong = NEW.MaPhong
+      AND MaHocKy = NEW.MaHocKy
+      AND Thu = NEW.Thu
+      AND MaLop <> NEW.MaLop -- Chỉ kiểm tra với các lớp khác
+      AND (
+          -- Lớp mới bắt đầu trong lúc lớp cũ đang diễn ra
+          (NEW.TietBatDau >= TietBatDau AND NEW.TietBatDau < (TietBatDau + SoTietHoc))
+          OR
+          -- Lớp cũ bắt đầu trong lúc lớp mới đang diễn ra
+          (TietBatDau >= NEW.TietBatDau AND TietBatDau < (NEW.TietBatDau + NEW.SoTietHoc))
+      );
+
+    IF v_count > 0 THEN
+        RAISE EXCEPTION 'Trùng lịch! Phòng % đã được sử dụng vào thời gian này trong học kỳ %.', NEW.MaPhong, NEW.MaHocKy;
+    END IF;
+
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trg_check_schedule_conflict
+BEFORE INSERT OR UPDATE ON LopHoc
+FOR EACH ROW
+EXECUTE FUNCTION fn_check_schedule_conflict();
+
+
+-- -----------------------------------------------------------------------------
+-- Ràng buộc: Mỗi học kỳ, giảng viên dạy tối đa 8 lớp
+-- -----------------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION fn_check_lecturer_class_limit()
+RETURNS TRIGGER AS $$
+DECLARE
+    v_class_count INT;
+BEGIN
+    SELECT COUNT(*) INTO v_class_count
+    FROM LopHoc
+    WHERE MaGV = NEW.MaGV AND MaHocKy = NEW.MaHocKy;
+
+    IF v_class_count >= 8 THEN
+        RAISE EXCEPTION 'Giảng viên % đã dạy đủ 8 lớp trong học kỳ %.', NEW.MaGV, NEW.MaHocKy;
+    END IF;
+
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trg_check_lecturer_class_limit
+BEFORE INSERT ON LopHoc
+FOR EACH ROW
+EXECUTE FUNCTION fn_check_lecturer_class_limit();
+
+
+-- -----------------------------------------------------------------------------
+-- Hàm tính điểm trung bình của sinh viên (lấy điểm cao nhất)
+-- -----------------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION fn_calculate_gpa(p_masv VARCHAR)
+RETURNS DECIMAL AS $$
+DECLARE
+    v_gpa DECIMAL;
+    v_total_weighted_score DECIMAL;
+    v_total_credits INT;
+BEGIN
+    WITH HighestScores AS (
+        SELECT
+            lh.MaMH,
+            MAX(dkh.Diem) as MaxDiem
+        FROM DangKyHoc dkh
+        JOIN LopHoc lh ON dkh.MaLop = lh.MaLop
+        WHERE dkh.MaSV = p_masv AND dkh.Diem IS NOT NULL
+        GROUP BY lh.MaMH
+    )
+    SELECT
+        SUM(hs.MaxDiem * mh.SoTinChi),
+        SUM(mh.SoTinChi)
+    INTO
+        v_total_weighted_score,
+        v_total_credits
+    FROM HighestScores hs
+    JOIN MonHoc mh ON hs.MaMH = mh.MaMH;
+
+    IF v_total_credits = 0 OR v_total_credits IS NULL THEN
+        RETURN 0.0;
+    END IF;
+
+    v_gpa := v_total_weighted_score / v_total_credits;
+    RETURN v_gpa;
+END;
+$$ LANGUAGE plpgsql;
+
+-- -----------------------------------------------------------------------------
+-- Hàm tính lương tháng của giảng viên
+-- -----------------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION fn_calculate_lecturer_salary(
+    p_magv VARCHAR,
+    p_mahocky VARCHAR,
+    p_don_gia_tiet DECIMAL
+)
+RETURNS DECIMAL AS $$
+DECLARE
+    v_total_tiet INT;
+    v_salary DECIMAL;
+BEGIN
+    SELECT COALESCE(SUM(mh.SoTiet), 0)
+    INTO v_total_tiet
+    FROM LopHoc lh
+    JOIN MonHoc mh ON lh.MaMH = mh.MaMH
+    WHERE lh.MaGV = p_magv AND lh.MaHocKy = p_mahocky;
+
+    -- Lương tháng = (Tổng số tiết * đơn giá) / 4 tháng
+    v_salary := (v_total_tiet * p_don_gia_tiet) / 4.0;
+    RETURN v_salary;
+END;
+$$ LANGUAGE plpgsql;
+
+
+-- =============================================================================
+-- PHẦN 3: CHÈN DỮ LIỆU MẪU (INSERT SAMPLE DATA)
+-- =============================================================================
+
+-- Khoa
+INSERT INTO Khoa (MaKhoa, TenKhoa) VALUES
+('CNTT', 'Công nghệ thông tin'),
+('KT', 'Kinh tế');
+
+-- Chuyên ngành
+INSERT INTO ChuyenNganh (MaChuyenNganh, TenChuyenNganh, MaKhoa) VALUES
+('KTPM', 'Kỹ thuật phần mềm', 'CNTT'),
+('HTTT', 'Hệ thống thông tin', 'CNTT'),
+('QTKD', 'Quản trị kinh doanh', 'KT');
+
+-- Giảng viên
+INSERT INTO GiangVien (MaGV, HoTenGV, MaKhoa) VALUES
+('GV01', 'Nguyễn Văn A', 'CNTT'),
+('GV02', 'Trần Thị B', 'CNTT'),
+('GV03', 'Lê Văn C', 'KT');
+
+-- Khóa học
+INSERT INTO KhoaHoc (MaKhoaHoc, TenKhoaHoc, NamBatDau) VALUES
+('K18', 'Khóa 18', 2022),
+('K19', 'Khóa 19', 2023);
+
+-- Loại hình đào tạo
+INSERT INTO LoaiHinhDaoTao (MaLHDT, TenLHDT) VALUES
+('CQ', 'Chính quy'),
+('TC', 'Tại chức');
+
+-- Sinh viên
+INSERT INTO SinhVien (MaSV, HoTenSV, MaChuyenNganh, MaKhoaHoc, MaLHDT) VALUES
+('K18.CNTT.CQ.001', 'Phạm Văn D', 'KTPM', 'K18', 'CQ'),
+('K18.CNTT.CQ.002', 'Nguyễn Thị E', 'KTPM', 'K18', 'CQ'),
+('K18.KT.CQ.001', 'Hoàng Văn F', 'QTKD', 'K18', 'CQ');
+
+-- Môn học
+-- Môn cơ bản
+INSERT INTO MonHoc (MaMH, TenMH, SoTinChi, SoTiet, MaChuyenNganh, LaMonCoBan) VALUES
+('CB.TRIET.01', 'Triết học Mác-Lênin', 3, 45, 'QTKD', TRUE),
+('CB.PLDC.01', 'Pháp luật đại cương', 2, 30, 'KTPM', TRUE);
+-- Môn chuyên ngành CNTT
+INSERT INTO MonHoc (MaMH, TenMH, SoTinChi, SoTiet, MaChuyenNganh) VALUES
+('CNTT.KTPM.101', 'Nhập môn lập trình', 3, 45, 'KTPM'),
+('CNTT.KTPM.102', 'Cấu trúc dữ liệu và giải thuật', 3, 45, 'KTPM'),
+('CNTT.KTPM.201', 'Cơ sở dữ liệu', 3, 45, 'KTPM');
+-- Môn chuyên ngành KT
+INSERT INTO MonHoc (MaMH, TenMH, SoTinChi, SoTiet, MaChuyenNganh) VALUES
+('KT.QTKD.101', 'Kinh tế vi mô', 3, 45, 'QTKD');
+
+
+-- Môn học tiên quyết: Để học 'Cấu trúc dữ liệu', phải qua 'Nhập môn lập trình'
+INSERT INTO MonHocTienQuyet (MaMH, MaMHTienQuyet) VALUES
+('CNTT.KTPM.102', 'CNTT.KTPM.101'),
+('CNTT.KTPM.201', 'CNTT.KTPM.102'); -- Để học CSDL phải qua CTDL&GT
+
+
+-- Phòng học
+INSERT INTO PhongHoc (MaPhong, SoGhe) VALUES
+('P-A101', 50),
+('P-A102', 30),
+('P-B205', 70);
+
+-- Học kỳ
+INSERT INTO HocKy (MaHocKy, TenHocKy, NgayBatDau, NgayKetThuc) VALUES
+('20231', 'Học kỳ 1 năm học 2023-2024', '2023-09-05', '2024-01-10'),
+('20232', 'Học kỳ 2 năm học 2023-2024', '2024-01-20', '2024-06-15');
+
+-- Lớp học
+-- Học kỳ 20231
+INSERT INTO LopHoc (MaLop, MaMH, MaHocKy, MaGV, MaPhong, Thu, TietBatDau, SoTietHoc) VALUES
+('231-NMLT-01', 'CNTT.KTPM.101', '20231', 'GV01', 'P-A101', 2, 1, 3), -- T2, tiết 1-3
+('231-PLDC-01', 'CB.PLDC.01', '20231', 'GV03', 'P-B205', 3, 7, 2);    -- T3, tiết 7-8
+-- Học kỳ 20232
+INSERT INTO LopHoc (MaLop, MaMH, MaHocKy, MaGV, MaPhong, Thu, TietBatDau, SoTietHoc) VALUES
+('232-CTDL-01', 'CNTT.KTPM.102', '20232', 'GV02', 'P-A102', 2, 4, 3), -- T2, tiết 4-6
+('232-NMLT-02', 'CNTT.KTPM.101', '20232', 'GV01', 'P-A101', 5, 1, 3); -- T5, tiết 1-3 (Lớp học lại)
+
+-- Đăng ký học
+-- Kỳ 20231: SV 'K18.CNTT.CQ.001' học Nhập môn lập trình và Pháp luật ĐC
+INSERT INTO DangKyHoc (MaSV, MaLop, Diem) VALUES
+('K18.CNTT.CQ.001', '231-NMLT-01', 8.5), -- Qua môn
+('K18.CNTT.CQ.001', '231-PLDC-01', 7.0);
+-- Kỳ 20231: SV 'K18.CNTT.CQ.002' học Nhập môn lập trình nhưng rớt
+INSERT INTO DangKyHoc (MaSV, MaLop, Diem) VALUES
+('K18.CNTT.CQ.002', '231-NMLT-01', 3.0); -- Rớt môn
+
+-- Kỳ 20232: SV 'K18.CNTT.CQ.001' học CTDL (đã qua môn tiên quyết)
+INSERT INTO DangKyHoc (MaSV, MaLop, Diem) VALUES
+('K18.CNTT.CQ.001', '232-CTDL-01', 9.0);
+-- Kỳ 20232: SV 'K18.CNTT.CQ.002' học lại NMLT
+INSERT INTO DangKyHoc (MaSV, MaLop, Diem) VALUES
+('K18.CNTT.CQ.002', '232-NMLT-02', 7.5); -- Lần này đã qua
+
+
+-- =============================================================================
+-- PHẦN 4: VÍ DỤ CÁC CÂU LỆNH KIỂM TRA
+-- =============================================================================
+
+/*
+-- 1. Thử đăng ký cho SV 'K18.CNTT.CQ.002' học CTDL (sẽ thất bại vì chưa qua môn tiên quyết NMLT)
+-- LƯU Ý: Để chạy được lệnh này, phải comment out lần đăng ký học lại thành công của SV 002 ở trên
+-- INSERT INTO DangKyHoc (MaSV, MaLop, Diem) VALUES ('K18.CNTT.CQ.002', '232-CTDL-01', NULL);
+-- >> Lỗi: Sinh viên K18.CNTT.CQ.002 chưa hoàn thành tất cả các môn tiên quyết cho môn học CNTT.KTPM.102.
+
+-- 2. Thử thêm một lớp trùng lịch (sẽ thất bại)
+-- INSERT INTO LopHoc (MaLop, MaMH, MaHocKy, MaGV, MaPhong, Thu, TietBatDau, SoTietHoc) VALUES
+-- ('231-TEST-01', 'KT.QTKD.101', '20231', 'GV03', 'P-A101', 2, 2, 3);
+-- >> Lỗi: Trùng lịch! Phòng P-A101 đã được sử dụng vào thời gian này trong học kỳ 20231.
+
+-- 3. Tính điểm trung bình cho sinh viên K18.CNTT.CQ.001
+SELECT fn_calculate_gpa('K18.CNTT.CQ.001');
+
+-- 4. Tính lương tháng của giảng viên GV01 trong kỳ 20231 (dạy 1 lớp 45 tiết)
+-- Giả sử đơn giá 100.000đ/tiết
+SELECT fn_calculate_lecturer_salary('GV01', '20231', 100000);
+-- >> Kết quả: (45 * 100000) / 4 = 1125000
+
+-- 5. Xem điểm cao nhất của từng môn mà sinh viên K18.CNTT.CQ.002 đã học
+SELECT
+    mh.TenMH,
+    MAX(dkh.Diem) as DiemCaoNhat
+FROM DangKyHoc dkh
+JOIN LopHoc lh ON dkh.MaLop = lh.MaLop
+JOIN MonHoc mh ON lh.MaMH = mh.MaMH
+WHERE dkh.MaSV = 'K18.CNTT.CQ.002'
+GROUP BY mh.TenMH;
+
+*/
