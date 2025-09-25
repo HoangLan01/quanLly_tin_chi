@@ -111,5 +111,12 @@ const api = {
         if (!response.ok) throw new Error('Không thể tải danh sách lớp học');
         return await response.json();
     },
+    getLecturers: async (searchTerm = '') => {
+        const url = new URL(`${API_BASE_URL}/lecturers`);
+        if (searchTerm) url.searchParams.append('search', searchTerm);
+        const response = await fetch(url);
+        if (!response.ok) throw new Error('Không thể tải danh sách giảng viên');
+        return await response.json();
+    },
 };
 

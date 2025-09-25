@@ -127,6 +127,7 @@ async function renderLecturerView(data) {
     // Sửa: Truyền data.giangVien thay vì data
     renderLecturerTable(data.giangVien);
     populateSelect('lecturer-faculty-filter', data.khoa, 'makhoa', 'tenkhoa');
+    setupSearch('lecturer-search-input', api.getLecturers, renderLecturerTable);
 }
 
 async function renderSubjectView(data) {
@@ -495,6 +496,27 @@ function renderSemesterTable(data) {
 }
 
 // ----- CÁC HÀM RENDER THỐNG KÊ -----
+
+// Hàm tìm kiếm chung
+function setupSearch(inputId, apiFunction, renderFunction) {
+    const searchInput = document.getElementById(inputId);
+    if (!searchInput) return;
+
+    let debounceTimer;
+    searchInput.addEventListener('input', (e) => {
+        clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(async () => {
+            const searchTerm = e.target.value;
+            try {
+                const data = await apiFunction(searchTerm);
+                renderFunction(data);
+            } catch (error) {
+                showToast(`Lỗi khi tìm kiếm: ${error.message}`, true);
+            }
+        }, 300); // Chờ 300ms sau khi người dùng ngừng gõ
+    });
+}
+
 
 async function renderStudentReportView(data) {
     const tableBody = document.getElementById('report-student-table-body');

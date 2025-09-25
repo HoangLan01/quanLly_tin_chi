@@ -36,31 +36,31 @@ pool.connect((err, client, release) => {
 // =============================================================================
 app.get('/api/alldata', async (req, res) => {
     try {
-        const [khoa, chuyenNganh, giangVien, khoaHoc, sinhVien, monHoc, hocKy, lopHoc, dangKyHoc, phongHoc, loaiHinhDaoTao] = await Promise.all([
+        const [khoa] = await Promise.all([
             pool.query('SELECT * FROM "khoa" ORDER BY "makhoa"'),
-            pool.query('SELECT * FROM "chuyennganh"'),
-            pool.query('SELECT * FROM "giangvien" ORDER BY "magv"'),
-            pool.query('SELECT * FROM "khoahoc"'),
-            pool.query('SELECT * FROM "sinhvien" ORDER BY "masv"'),
-            pool.query('SELECT * FROM "monhoc" ORDER BY "mamh"'),
-            pool.query('SELECT * FROM "hocky" ORDER BY "mahocky"'),
-            pool.query('SELECT * FROM "lophoc" ORDER BY "malop"'),
-            pool.query('SELECT * FROM "dangkyhoc"'),
-            pool.query('SELECT * FROM "phonghoc"'),
-            pool.query('SELECT * FROM "loaihinhdaotao"')
+            // pool.query('SELECT * FROM "chuyennganh"'),
+            // pool.query('SELECT * FROM "giangvien" ORDER BY "magv"'),
+            // pool.query('SELECT * FROM "khoahoc"'),
+            // pool.query('SELECT * FROM "sinhvien" ORDER BY "masv"'),
+            // pool.query('SELECT * FROM "monhoc" ORDER BY "mamh"'),
+            // pool.query('SELECT * FROM "hocky" ORDER BY "mahocky"'),
+            // pool.query('SELECT * FROM "lophoc" ORDER BY "malop"'),
+            // pool.query('SELECT * FROM "dangkyhoc"'),
+            // pool.query('SELECT * FROM "phonghoc"'),
+            // pool.query('SELECT * FROM "loaihinhdaotao"')
         ]);
         res.json({
             khoa: khoa.rows,
-            chuyenNganh: chuyenNganh.rows,
-            giangVien: giangVien.rows,
-            khoaHoc: khoaHoc.rows,
-            sinhVien: sinhVien.rows,
-            monHoc: monHoc.rows,
-            hocKy: hocKy.rows,
-            lopHoc: lopHoc.rows,
-            dangKyHoc: dangKyHoc.rows,
-            phongHoc: phongHoc.rows,
-            loaiHinhDaoTao: loaiHinhDaoTao.rows
+            chuyenNganh: [],
+            giangVien: [],
+            khoaHoc: [],
+            sinhVien: [],
+            monHoc: [],
+            hocKy: [],
+            lopHoc: [],
+            dangKyHoc: [],
+            phongHoc: [],
+            loaiHinhDaoTao: []
         });
     } catch (err) {
         console.error('Lỗi API /alldata:', err.message);
@@ -162,6 +162,25 @@ app.delete('/api/lecturers/:id', async (req, res) => {
     try {
         await pool.query('DELETE FROM "giangvien" WHERE "magv" = $1', [id]);
         res.json({ message: 'Xóa giảng viên thành công' });
+    } catch (err) { console.error(err.message); res.status(500).json({ error: err.message }); }
+});
+
+// Lấy tất cả giảng viên
+app.get('/api/lecturers', async (req, res) => {
+    const { search } = req.query;
+    console.log('Search term received:', search); // Log the search term
+    try {
+        let query = 'SELECT * FROM giangvien';
+        const params = [];
+        // if (search) {
+        //     query += ' WHERE magv ILIKE $1 OR hotengv ILIKE $1';
+        //     params.push(`%${search}%`);
+        // }
+        query += ' ORDER BY magv';
+
+        console.log('Executing query:', query, params); // Log the query and params
+        const { rows } = await pool.query(query, params);
+        res.json(rows);
     } catch (err) { console.error(err.message); res.status(500).json({ error: err.message }); }
 });
 
@@ -493,7 +512,15 @@ app.get('/api/statistics/classroom-usage', async (req, res) => {
 });
 
 
-app.listen(port, () => {
-  console.log(`Backend server đang chạy tại http://localhost:${port}`);
-});
+setInterval(() => {
+    console.log('Server process is still alive.');
+}, 5000);
+
+try {
+    app.listen(port, () => {
+        console.log(`Backend server đang chạy tại http://localhost:${port}`);
+    });
+} catch (err) {
+    console.error('Error starting server:', err.message);
+}
 
